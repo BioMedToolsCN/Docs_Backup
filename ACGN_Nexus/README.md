@@ -69,24 +69,16 @@
 ```text
 acgn-nexus-archive/
 ├── README.md
-├── LICENSE                  # 文章 CC BY 4.0；元数据 CC0 1.0
-├── CITATION.cff             # GitHub 侧的引用信息
 ├── metadata/
 │   ├── articles.csv         # 11 篇主索引（与「文献一览」同源）
-│   ├── crossref_raw.json    # Crossref 原始记录，元数据兜底
-│   └── schema.md            # 字段说明
+│   └──  crossref_raw.json    # Crossref 原始记录，元数据兜底
 ├── pdf/                     # 正式发表版 PDF
-├── site/                    # 首页、当期目录、停刊公告等 HTML 快照
-├── docs/                    # 保存记录、勘误、引用追踪
-├── SHA256SUMS               # 全部文件的校验和
-└── scripts/
-    ├── fetch.sh             # 站点下线前重新抓取
-    └── verify.sh            # 校验完整性 + DOI 解析状态
+└── site/                    # 网页快照：首页、目录、公告、文章页（见 site/README.md）
 ```
 
 **命名规则**：`pdf/{文章编号}_{年份}_{主题 slug}.pdf`，例如 `e0003_2026_detroit-become-human.pdf`。slug 取英文题名的关键词（无英文题名时取中文题名的意译），全小写、连字符分隔，不用空格和中文标点——避免跨平台与解压时的编码问题。
 
-**当前进度**：元数据索引（`articles.csv`）与 Crossref 快照已就位；`pdf/`、`site/`、`docs/`、`LICENSE`、`CITATION.cff`、脚本与 `SHA256SUMS` 尚待补齐。期刊站下载偏慢（实测单篇常需数分钟），补齐后统一生成校验和。
+**当前进度**：元数据索引（`articles.csv`）、Crossref 快照与 19 个网页快照（`site/`）已就位；PDF 正在补齐——期刊站对单连接限速在 1–5 KB/s，单篇 28 MB 的文件需要数小时。`docs/`、`LICENSE`、`CITATION.cff` 与 `SHA256SUMS` 待 PDF 齐备后一并生成。
 
 ## 如何引用
 
@@ -148,64 +140,6 @@ CC BY 4.0 的实质要求只有一条：**署名**。使用原文时保留作者
 - **原文勘误**：作者发布勘误时，另存为 `pdf/eXXXX_erratum.pdf` 并在索引中标注，原始版本保留不动。
 - **权利争议**：涉及著作权归属争议的，建议先与作者或出版方沟通；本仓库收到有效通知后先行下架，再讨论恢复。
 
-## 存档策略：不止一份
-
-单一 GitHub 仓库并不是长期保存方案：账号会迁移、仓库会误删、LFS 对象会失效。建议三层冗余，且三层彼此独立：
-
-1. **本仓库（Git + GitHub）** —— 日常访问、检索与引用入口，可随时 fork 到任意账号或平台。
-2. **Zenodo 快照** —— 每个 release 打包上传一次，获得独立 DOI。即使 GitHub 消失，内容仍可解析、仍可引用。
-3. **Internet Archive** —— 对首页、当期目录、停刊公告，以及每篇文章的 landing page 各执行一次 Save Page Now（`https://web.archive.org/save/<URL>`）。
-
-`metadata/crossref_raw.json` 是 DOI 信息的最后防线：即便出版方站点下线，`https://api.crossref.org/journals/3142-8452/works` 仍可能返回记录，可据此重建引用信息。
-
-## 仓库体积与存储
-
-期刊 PDF 体积明显偏大：实测单篇在 8–28 MB 之间（`e0001` 约 8 MB，`e0002`、`e0003` 各约 27 MB），全卷合计预计 200 MB 以上。这带来两个约束：GitHub 单文件上限 100 MB，当前都在限内，但仓库会很快变重；期刊站下载很慢，批量抓取务必断点续传。
-
-| 方案 | 做法 | 适用 |
-| --- | --- | --- |
-| A. 全量入库 | 直接提交原始 PDF | 仓库保持在数百 MB 量级，偶尔克隆 |
-| B. Git LFS | `git lfs track "pdf/*.pdf"` | 需要频繁克隆，又不想仓库膨胀 |
-| C. 原件放 Zenodo | 仓库只存元数据与链接，PDF 由 Zenodo DOI 提供 | 保存优先、访问量低 |
-
-无论选哪种，**不要为了瘦身重新压缩 PDF**。原件是“发表版本”的凭证，任何改动都会削弱它的证据价值。若需要便于阅读的轻量版本，另建 `pdf-optimized/` 并明确标注为非存档版本。
-
-## 维护清单
-
-- [ ] 补齐 11 篇 PDF 与页面快照，生成 `SHA256SUMS`
-- [ ] 发布 v1.0.0 release，上传 Zenodo 并回填 DOI
-- [ ] 每 6 个月：抽查 3 个 DOI 是否仍解析到出版方页面
-- [ ] 每 6 个月：校验文件未被改动
-- [ ] 2027 年 5 月前：确认期刊站点状态；若已下线，补抓 Wayback 快照并更新本页的“期刊信息”
-- [ ] 每年：检索是否有新的引用或二次研究，补充到 `docs/citations.md`（可选）
-
-**补齐 PDF** —— 下载链接需要 galley 的 revision 号，从文章页的 Download 按钮获取，形如：
-
-```bash
-curl -C - -L --retry 5 \
-  -o "pdf/e0003_2026_detroit-become-human.pdf" \
-  "https://journal.scihorizon.org/index.php/ACGN/article/download/10/13/43"
-```
-
-**校验 DOI 是否存活**：
-
-```bash
-curl -sI "https://doi.org/10.66309/4n9zhv91" | head -n 5
-```
-
-**校验文件完整性**：
-
-```bash
-sha256sum -c SHA256SUMS          # Linux
-shasum -a 256 -c SHA256SUMS      # macOS
-```
-
-## 已知限制
-
-- **没有全文检索**：仓库内不提供全文索引，PDF 能否复制文本取决于原件。需要检索时在本地用 `pdftotext` 生成副本，不要覆盖原件。
-- **快照是静态的**：部分样式、图片与引用导出功能会失效，仅用于佐证“当时的页面长什么样”。
-- **一致性靠人工比对**：文章编号、题名、DOI 与日期已逐条对照官网与 Crossref，但正文尚未逐字校对。
-- **不代替正式记录**：引用以 DOI 与 Crossref 元数据为准；本仓库只提供失效时的回退路径。
 
 ## 参与
 
