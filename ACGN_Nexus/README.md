@@ -23,7 +23,7 @@
 | ISSN | [3142-8452](https://portal.issn.org/resource/ISSN/3142-8452)（在线） |
 | DOI 前缀 | `10.66309`（Crossref 注册） |
 | 出版方 | SciHorizon Global LLC，30 N Gould St Ste R, Sheridan, WY 82801, USA |
-| 官网 | https://journal.scihorizon.org（官方承诺维护至 2027 年 5 月） |
+| 官网 | https://journal.scihorizon.org/ （官方承诺维护至 2027 年 5 月） |
 | 出版平台 | Open Journal Systems（OJS 3.5） |
 | 创刊 / 停刊 | 2026 年 2 月 / 2026 年 10 月 |
 | 收录卷期 | Vol. 1, No. 1，2026-10-16 上线 |
